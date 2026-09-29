@@ -153,8 +153,13 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
 
-    "cloudinary_storage",
+    # IMPORTANT:
+    # Keep Django staticfiles BEFORE cloudinary_storage.
+    # Static files are handled by WhiteNoise.
     "django.contrib.staticfiles",
+
+    # Cloudinary is used only for uploaded media.
+    "cloudinary_storage",
     "cloudinary",
 
     "core.apps.CoreConfig",
@@ -328,6 +333,7 @@ STORAGES = {
     "default": {
         "BACKEND": DEFAULT_MEDIA_BACKEND,
     },
+
     "staticfiles": {
         "BACKEND":
             "whitenoise.storage."
