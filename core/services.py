@@ -80,7 +80,7 @@ def fetch_semantic_scholar_citations(doi: str) -> dict:
     if not doi:
         raise ValueError("DOI is required")
     url = f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}"
-    headers = {}
+    headers = {"User-Agent": "ScientificPortfolio/1.0"}
     if settings.SEMANTIC_SCHOLAR_API_KEY:
         headers["x-api-key"] = settings.SEMANTIC_SCHOLAR_API_KEY
     params = {"fields": "title,citationCount,externalIds,url"}
@@ -89,15 +89,62 @@ def fetch_semantic_scholar_citations(doi: str) -> dict:
     return r.json()
 
 
-def sync_publication_citation(publication: Publication):
-    data = fetch_semantic_scholar_citations(publication.doi)
-    count = int(data.get("citationCount") or 0)
-    publication.citation_count = count
-    publication.citation_source = "Semantic Scholar"
+def fetch_crossref_citation_count(doi: str) -> int:
+    """Return Crossref's is-referenced-by-count for a DOI.
+
+    This is used as a fallback when Semantic Scholar cannot resolve the DOI
+    or its API is temporarily unavailable/rate-limited.
+    """
+    data = fetch_crossref_metadata(doi)
+    return int(data.get("is-referenced-by-count") or 0)
+
+
+def _store_citation_count(publication: Publication, count: int, source: str):
+    publication.citation_count = max(0, int(count or 0))
+    publication.citation_source = source
     publication.citation_last_synced = timezone.now()
     publication.save(update_fields=["citation_count", "citation_source", "citation_last_synced", "updated_at"])
-    CitationSnapshot.objects.create(publication=publication, source="Semantic Scholar", citation_count=count, raw_identifier=publication.doi or "")
-    return count
+    CitationSnapshot.objects.create(
+        publication=publication,
+        source=source,
+        citation_count=publication.citation_count,
+        raw_identifier=publication.doi or "",
+    )
+    return publication.citation_count
+
+
+def sync_publication_citation(publication: Publication):
+    """Synchronize one publication's citation count.
+
+    Primary source: Semantic Scholar.
+    Fallback source: Crossref is-referenced-by-count.
+
+    The source actually used is stored with the publication and snapshot so
+    the website never presents counts from different indexes as if identical.
+    """
+    doi = normalize_doi(publication.doi)
+    if not doi:
+        raise ValueError("Publication has no DOI")
+
+    semantic_error = None
+    try:
+        data = fetch_semantic_scholar_citations(doi)
+        return _store_citation_count(
+            publication,
+            int(data.get("citationCount") or 0),
+            "Semantic Scholar",
+        )
+    except (requests.RequestException, ValueError, KeyError, TypeError) as exc:
+        semantic_error = exc
+
+    try:
+        count = fetch_crossref_citation_count(doi)
+        return _store_citation_count(publication, count, "Crossref")
+    except (requests.RequestException, ValueError, KeyError, TypeError) as crossref_error:
+        raise RuntimeError(
+            f"Citation lookup failed. Semantic Scholar: {semantic_error}; "
+            f"Crossref: {crossref_error}"
+        ) from crossref_error
 
 
 def portfolio_metrics():

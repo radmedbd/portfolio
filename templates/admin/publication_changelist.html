@@ -1,5 +1,6 @@
 {% extends "admin/change_list.html" %}
 {% block object-tools-items %}
+<li><a href="{% url 'admin:core_publication_sync_citations_all' %}">Sync all citations</a></li>
 <li><a href="{% url 'admin:core_publication_import_doi' %}" class="addlink">Import by DOI</a></li>
 {{ block.super }}
 {% endblock %}

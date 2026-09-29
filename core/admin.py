@@ -166,8 +166,29 @@ class PublicationAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         urls = super().get_urls()
-        custom = [path("import-doi/", self.admin_site.admin_view(self.import_doi_view), name="core_publication_import_doi")]
+        custom = [
+            path("import-doi/", self.admin_site.admin_view(self.import_doi_view), name="core_publication_import_doi"),
+            path("sync-citations-all/", self.admin_site.admin_view(self.sync_all_citations_view), name="core_publication_sync_citations_all"),
+        ]
         return custom + urls
+
+    def sync_all_citations_view(self, request):
+        queryset = Publication.objects.exclude(doi__isnull=True).exclude(doi="")
+        ok = fail = 0
+        for pub in queryset:
+            try:
+                sync_publication_citation(pub)
+                ok += 1
+            except Exception as exc:
+                fail += 1
+                messages.warning(request, f"{pub.title[:60]}: {exc}")
+        if ok:
+            messages.success(request, f"Citation synchronization complete: {ok} updated; {fail} failed.")
+        elif not queryset.exists():
+            messages.warning(request, "No publications with a DOI were found.")
+        else:
+            messages.error(request, f"Citation synchronization failed for all {fail} publications.")
+        return redirect(reverse("admin:core_publication_changelist"))
 
     def import_doi_view(self, request):
         form = DOIImportForm(request.POST or None)
@@ -187,7 +208,20 @@ class PublicationAdmin(admin.ModelAdmin):
                         authors.append(name)
                 pub = Publication.objects.create(title=title or doi, authors=", ".join(authors), doi=doi, status="Published")
                 apply_crossref_metadata(pub, data, overwrite=True)
-                self.message_user(request, "Publication imported from Crossref. Review the record, add tags/themes, then save.", level=messages.SUCCESS)
+                try:
+                    count = sync_publication_citation(pub)
+                    source = pub.citation_source or "citation service"
+                    self.message_user(
+                        request,
+                        f"Publication imported and citations synchronized: {count} ({source}).",
+                        level=messages.SUCCESS,
+                    )
+                except Exception as citation_exc:
+                    self.message_user(
+                        request,
+                        f"Publication imported, but citation synchronization failed: {citation_exc}",
+                        level=messages.WARNING,
+                    )
                 return redirect(reverse("admin:core_publication_change", args=[pub.pk]))
             except Exception as exc:
                 self.message_user(request, f"DOI import failed: {exc}", level=messages.ERROR)
