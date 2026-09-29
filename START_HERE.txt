@@ -1,0 +1,10 @@
+1) Create/activate .venv
+2) pip install -r requirements.txt
+3) Copy .env.example to .env
+4) python manage.py makemigrations core
+5) python manage.py migrate
+6) python manage.py createsuperuser
+7) python manage.py seed_demo   (optional)
+8) python manage.py runserver
+9) Test Gmail after adding an App Password: python manage.py test_email --to physicist.cmch@gmail.com
+10) Commit core/migrations/*.py before Render deployment.

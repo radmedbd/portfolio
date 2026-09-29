@@ -89,6 +89,19 @@ def fetch_semantic_scholar_citations(doi: str) -> dict:
     return r.json()
 
 
+def fetch_openalex_citations(doi: str) -> dict:
+    doi = normalize_doi(doi)
+    if not doi:
+        raise ValueError("DOI is required")
+    url = f"https://api.openalex.org/works/https://doi.org/{doi}"
+    params = {}
+    if getattr(settings, "OPENALEX_MAILTO", ""):
+        params["mailto"] = settings.OPENALEX_MAILTO
+    r = requests.get(url, params=params, headers={"User-Agent": "ScientificPortfolio/1.0"}, timeout=20)
+    r.raise_for_status()
+    return r.json()
+
+
 def fetch_crossref_citation_count(doi: str) -> int:
     """Return Crossref's is-referenced-by-count for a DOI.
 
@@ -114,38 +127,36 @@ def _store_citation_count(publication: Publication, count: int, source: str):
 
 
 def sync_publication_citation(publication: Publication):
-    """Synchronize one publication's citation count.
+    """Sync one DOI using Semantic Scholar, then OpenAlex, then Crossref.
 
-    Primary source: Semantic Scholar.
-    Fallback source: Crossref is-referenced-by-count.
-
-    The source actually used is stored with the publication and snapshot so
-    the website never presents counts from different indexes as if identical.
+    The source actually used is stored on the publication and in CitationSnapshot.
     """
     doi = normalize_doi(publication.doi)
     if not doi:
         raise ValueError("Publication has no DOI")
 
-    semantic_error = None
+    errors = []
     try:
         data = fetch_semantic_scholar_citations(doi)
-        return _store_citation_count(
-            publication,
-            int(data.get("citationCount") or 0),
-            "Semantic Scholar",
-        )
-    except (requests.RequestException, ValueError, KeyError, TypeError) as exc:
-        semantic_error = exc
+        if data.get("paperId"):
+            return _store_citation_count(publication, int(data.get("citationCount") or 0), "Semantic Scholar")
+    except Exception as exc:
+        errors.append(f"Semantic Scholar: {exc}")
+
+    try:
+        data = fetch_openalex_citations(doi)
+        if data.get("id"):
+            return _store_citation_count(publication, int(data.get("cited_by_count") or 0), "OpenAlex")
+    except Exception as exc:
+        errors.append(f"OpenAlex: {exc}")
 
     try:
         count = fetch_crossref_citation_count(doi)
         return _store_citation_count(publication, count, "Crossref")
-    except (requests.RequestException, ValueError, KeyError, TypeError) as crossref_error:
-        raise RuntimeError(
-            f"Citation lookup failed. Semantic Scholar: {semantic_error}; "
-            f"Crossref: {crossref_error}"
-        ) from crossref_error
+    except Exception as exc:
+        errors.append(f"Crossref: {exc}")
 
+    raise RuntimeError("Citation lookup failed. " + " | ".join(errors))
 
 def portfolio_metrics():
     qs = Publication.objects.filter(status__in=["Accepted", "In Press", "Published"])
@@ -176,7 +187,7 @@ def _format_email_template(key, submission, default_subject, default_body, setti
 
 def send_contact_emails(submission):
     settings_obj = SiteSettings.get_solo()
-    admin_to = settings_obj.contact_notification_email or settings_obj.primary_email
+    admin_to = settings_obj.contact_notification_email or settings_obj.primary_email or settings.CONTACT_NOTIFICATION_EMAIL
     admin_subject_default = "New portfolio inquiry: {inquiry_type}"
     admin_body_default = (
         "A new inquiry has been submitted through your scientific portfolio.\n\n"

@@ -2,6 +2,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator, MaxValueValidator
+from .storage_backends import ConditionalRawMediaStorage
 
 
 class TimeStampedModel(models.Model):
@@ -17,11 +18,11 @@ class SiteSettings(TimeStampedModel):
     professional_title = models.CharField(max_length=220, blank=True)
     tagline = models.CharField(max_length=260, blank=True)
     institution = models.CharField(max_length=220, blank=True)
-    primary_email = models.EmailField(blank=True)
+    primary_email = models.EmailField(blank=True, default="physicist.cmch@gmail.com")
     phone = models.CharField(max_length=50, blank=True)
     address = models.CharField(max_length=300, blank=True)
     footer_text = models.CharField(max_length=300, blank=True)
-    contact_notification_email = models.EmailField(blank=True)
+    contact_notification_email = models.EmailField(blank=True, default="physicist.cmch@gmail.com")
     logo = models.ImageField(upload_to="branding/", blank=True, null=True)
     favicon = models.ImageField(upload_to="branding/", blank=True, null=True)
     default_meta_title = models.CharField(max_length=180, blank=True)
@@ -248,7 +249,7 @@ class CVEntry(TimeStampedModel):
 
 class CVDocument(TimeStampedModel):
     title = models.CharField(max_length=180, default="Curriculum Vitae")
-    file = models.FileField(upload_to="cv/")
+    file = models.FileField(upload_to="cv/", storage=ConditionalRawMediaStorage())
     version = models.CharField(max_length=40, blank=True)
     effective_date = models.DateField(blank=True, null=True)
     is_current = models.BooleanField(default=True)
@@ -399,7 +400,7 @@ class Publication(TimeStampedModel):
     tags = models.ManyToManyField(Tag, blank=True, related_name="publications")
     collaborators = models.ManyToManyField(ConnectedPerson, blank=True, related_name="publications")
     external_url = models.URLField(blank=True)
-    pdf = models.FileField(upload_to="publications/", blank=True, null=True)
+    pdf = models.FileField(upload_to="publications/", storage=ConditionalRawMediaStorage(), blank=True, null=True)
     open_access = models.BooleanField(default=False)
     featured = models.BooleanField(default=False)
     thumbnail = models.ImageField(upload_to="publications/thumbnails/", blank=True, null=True)
@@ -457,7 +458,7 @@ class ResearchHubItem(TimeStampedModel):
     summary = models.TextField(blank=True)
     body = models.TextField(blank=True)
     thumbnail = models.ImageField(upload_to="hub/", blank=True, null=True)
-    file = models.FileField(upload_to="hub/files/", blank=True, null=True)
+    file = models.FileField(upload_to="hub/files/", storage=ConditionalRawMediaStorage(), blank=True, null=True)
     external_url = models.URLField(blank=True)
     publication_date = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=40, choices=STATUS_CHOICES, default="Published")
@@ -486,7 +487,7 @@ class ResearchHubBlock(TimeStampedModel):
     heading = models.CharField(max_length=240, blank=True)
     body = models.TextField(blank=True)
     image = models.ImageField(upload_to="hub/blocks/", blank=True, null=True)
-    file = models.FileField(upload_to="hub/blocks/files/", blank=True, null=True)
+    file = models.FileField(upload_to="hub/blocks/files/", storage=ConditionalRawMediaStorage(), blank=True, null=True)
     url = models.URLField(blank=True)
     button_label = models.CharField(max_length=100, blank=True)
     display_order = models.PositiveIntegerField(default=0)

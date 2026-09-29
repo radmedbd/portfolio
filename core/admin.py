@@ -134,7 +134,7 @@ def refresh_crossref(modeladmin, request, queryset):
             messages.warning(request, f"{pub.title[:60]}: {exc}")
     messages.success(request, f"Crossref refreshed: {ok}; failed: {fail}")
 
-@admin.action(description="Sync citation counts from Semantic Scholar")
+@admin.action(description="Sync citation counts (Semantic Scholar → OpenAlex → Crossref)")
 def sync_citations(modeladmin, request, queryset):
     ok = fail = 0
     for pub in queryset.exclude(doi__isnull=True).exclude(doi=""):
