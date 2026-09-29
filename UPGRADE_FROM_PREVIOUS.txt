@@ -1,0 +1,63 @@
+UPGRADE FROM THE PREVIOUS PORTFOLIO BUILD
+=========================================
+
+1. Stop the Django server (Ctrl+C).
+2. Back up any files you already customized.
+3. Replace the old scientific_portfolio application folder with this updated one.
+4. Keep/activate your existing virtual environment.
+
+PowerShell:
+
+  cd E:\scientific_portfolio\scientific_portfolio
+  python -m pip install -r requirements.txt
+  python manage.py makemigrations core
+  python manage.py migrate
+
+5. If you have not created a superuser:
+
+  python manage.py createsuperuser
+
+6. Optional starter content:
+
+  python manage.py seed_demo
+
+7. Start:
+
+  python manage.py runserver
+
+IMPORTANT
+---------
+Do not delete an existing db.sqlite3 if it contains content you want to keep.
+Running makemigrations/migrate adds the new Profile fields and banner/homepage tables.
+
+If the current local database contains only failed test data and you want a clean start,
+you may remove db.sqlite3 BEFORE running migrate, then run:
+
+  python manage.py makemigrations core
+  python manage.py migrate
+  python manage.py createsuperuser
+  python manage.py seed_demo
+
+ADMIN STRUCTURE
+---------------
+Homepage Banner   (one Admin screen; settings + slides inline)
+Homepage settings
+
+There is no separate Banner Slides menu and no generic Slider/Slider Items menu.
+
+NAVIGATION
+----------
+There is no Home menu item and no About menu item.
+The logo links to the homepage.
+CV is displayed as "Academic & Professional Profile" in navigation.
+
+
+ONE-SLIDER REVISION
+-------------------
+The old generic Slider and SliderItem models have been removed.
+The homepage hero is the only slider. Featured Research now reads from Publications marked Featured.
+After replacing the code, run:
+  python manage.py makemigrations core
+  python manage.py migrate
+
+If this is only a local test project and migration history becomes inconsistent, the simplest clean setup is to back up anything important, delete db.sqlite3 and generated core migration files (keep core/migrations/__init__.py), then run makemigrations/migrate again.

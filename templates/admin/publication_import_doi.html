@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div id="content-main">
+  <form method="post" novalidate>{% csrf_token %}
+    <fieldset class="module aligned">
+      <div class="form-row"><div>{{ form.doi.errors }}{{ form.doi.label_tag }} {{ form.doi }}{% if form.doi.help_text %}<div class="help">{{ form.doi.help_text }}</div>{% endif %}</div></div>
+    </fieldset>
+    <div class="submit-row"><input type="submit" value="Fetch DOI metadata" class="default"><a href="{% url 'admin:core_publication_changelist' %}" class="button cancel-link">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

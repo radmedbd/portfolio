@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}{{ site_settings.owner_name|default:site_settings.site_name }} — Scientific Portfolio{% endblock %}
+{% block content %}
+
+{% if banner_settings.enabled %}
+<section
+  class="dynamic-banner banner-effect-{{ banner_settings.transition_type }} banner-direction-{{ banner_settings.direction }}"
+  style="--banner-min-height: {{ banner_settings.min_height_px }}px; --banner-overlay: {{ banner_settings.overlay_opacity|default:58 }}%; --banner-transition: {{ banner_settings.transition_ms }}ms;"
+  data-banner
+  data-autoplay="{{ banner_settings.autoplay|yesno:'true,false' }}"
+  data-interval="{{ banner_settings.interval_ms }}"
+  data-transition="{{ banner_settings.transition_ms }}"
+  data-loop="{{ banner_settings.loop|yesno:'true,false' }}"
+  data-pause-hover="{{ banner_settings.pause_on_hover|yesno:'true,false' }}"
+  data-direction="{{ banner_settings.direction }}"
+  data-effect="{{ banner_settings.transition_type }}"
+  data-overlay="{{ banner_settings.overlay_opacity }}"
+>
+  <div class="banner-stage">
+    {% for slide in banner_slides %}
+      <article
+        class="banner-slide {% if forloop.first %}is-active{% endif %} align-{{ slide.text_alignment }}"
+        {% if slide.background_image %}style="--banner-image: url('{{ slide.background_image.url }}');"{% endif %}
+        aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}"
+      >
+        <div class="banner-backdrop"></div>
+        <div class="container banner-content-grid">
+          <div class="banner-copy">
+            {% if slide.eyebrow %}<p class="banner-eyebrow">{{ slide.eyebrow }}</p>{% endif %}
+            <h1>{{ slide.title|default:profile.full_name|default:site_settings.owner_name }}</h1>
+            {% if slide.subtitle %}<p class="banner-subtitle">{{ slide.subtitle }}</p>{% elif profile %}<p class="banner-subtitle">{{ profile.current_title }}</p>{% endif %}
+            {% if slide.description %}<p class="banner-description">{{ slide.description }}</p>{% elif profile.short_bio %}<p class="banner-description">{{ profile.short_bio }}</p>{% endif %}
+
+            <div class="hero-actions colorful-actions">
+              {% if slide.primary_button_text %}<a class="hero-btn hero-btn-research" href="{{ slide.primary_button_url|default:'/research/' }}">{{ slide.primary_button_text }}</a>{% endif %}
+              {% if slide.secondary_button_text %}<a class="hero-btn hero-btn-cv" href="{{ slide.secondary_button_url|default:'/cv/' }}">{{ slide.secondary_button_text }}</a>{% endif %}
+              {% if slide.tertiary_button_text %}<a class="hero-btn hero-btn-contact" href="{{ slide.tertiary_button_url|default:'/contact/' }}">{{ slide.tertiary_button_text }}</a>{% endif %}
+            </div>
+          </div>
+
+          <div class="banner-side">
+            {% if slide.foreground_image %}
+              <div class="banner-portrait-wrap"><img class="banner-portrait" src="{{ slide.foreground_image.url }}" alt=""></div>
+            {% elif profile.profile_photo %}
+              <div class="banner-portrait-wrap"><img class="banner-portrait" src="{{ profile.profile_photo.url }}" alt="Portrait of {{ profile.full_name }}"></div>
+            {% endif %}
+
+            {% if home_settings.show_metrics %}
+            <div class="banner-metrics" aria-label="Research metrics">
+              {% if site_settings.show_publication_metric %}
+              <div class="banner-metric"><strong>{{ global_metrics.total_publications }}</strong><span>Publications</span></div>
+              {% endif %}
+              {% if site_settings.show_citation_metric %}
+              <div class="banner-metric"><strong>{{ global_metrics.total_citations }}</strong><span>Citations</span></div>
+              {% endif %}
+              <div class="banner-metric"><strong>{{ global_metrics.total_projects }}</strong><span>Research Projects</span></div>
+              <p class="banner-metric-source">Citation source: {{ site_settings.citation_source_label }}{% if global_metrics.last_citation_sync %}<br>Updated {{ global_metrics.last_citation_sync|date:"d M Y" }}{% endif %}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+    {% empty %}
+      <article class="banner-slide is-active align-left banner-fallback" aria-hidden="false">
+        <div class="banner-backdrop"></div>
+        <div class="container banner-content-grid">
+          <div class="banner-copy">
+            <p class="banner-eyebrow">Scientific Portfolio</p>
+            <h1>{{ profile.full_name|default:site_settings.owner_name }}</h1>
+            <p class="banner-subtitle">{{ profile.current_title|default:site_settings.professional_title }}</p>
+            <p class="banner-description">{{ profile.short_bio|default:site_settings.tagline }}</p>
+            <div class="hero-actions colorful-actions">
+              <a class="hero-btn hero-btn-research" href="{% url 'research_list' %}">View Research</a>
+              <a class="hero-btn hero-btn-cv" href="{% url 'cv' %}">View CV</a>
+              <a class="hero-btn hero-btn-contact" href="{% url 'contact' %}">Contact →</a>
+            </div>
+          </div>
+          <div class="banner-side">
+            {% if profile.profile_photo %}<div class="banner-portrait-wrap"><img class="banner-portrait" src="{{ profile.profile_photo.url }}" alt="Portrait of {{ profile.full_name }}"></div>{% endif %}
+            {% if home_settings.show_metrics %}
+            <div class="banner-metrics" aria-label="Research metrics">
+              {% if site_settings.show_publication_metric %}<div class="banner-metric"><strong>{{ global_metrics.total_publications }}</strong><span>Publications</span></div>{% endif %}
+              {% if site_settings.show_citation_metric %}<div class="banner-metric"><strong>{{ global_metrics.total_citations }}</strong><span>Citations</span></div>{% endif %}
+              <div class="banner-metric"><strong>{{ global_metrics.total_projects }}</strong><span>Research Projects</span></div>
+              <p class="banner-metric-source">Citation source: {{ site_settings.citation_source_label }}{% if global_metrics.last_citation_sync %}<br>Updated {{ global_metrics.last_citation_sync|date:"d M Y" }}{% endif %}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+
+  {% if banner_settings.show_arrows and banner_slides|length > 1 %}
+  <button class="banner-arrow banner-prev" type="button" data-banner-prev aria-label="Previous banner">‹</button>
+  <button class="banner-arrow banner-next" type="button" data-banner-next aria-label="Next banner">›</button>
+  {% endif %}
+  {% if banner_settings.show_dots and banner_slides|length > 1 %}<div class="banner-dots" data-banner-dots aria-label="Banner navigation"></div>{% endif %}
+  {% if banner_slides|length > 1 %}<button class="banner-pause" type="button" data-banner-pause aria-label="Pause banner">Pause</button>{% endif %}
+</section>
+{% endif %}
+
+{% if home_settings.show_overview and profile %}
+<section class="section overview-section">
+  <div class="container">
+    <div class="section-head">
+      <div><p class="eyebrow">Portfolio Summary</p><h2>{{ profile.homepage_summary_heading|default:home_settings.overview_title }}</h2></div>
+      <a class="section-link" href="{% url 'cv' %}">Academic &amp; Professional Profile →</a>
+    </div>
+    <div class="overview-grid">
+      <div class="overview-photo-card">
+        {% if profile.profile_photo %}<img src="{{ profile.profile_photo.url }}" alt="Portrait of {{ profile.full_name }}">{% else %}<div class="photo-placeholder">{{ profile.full_name|slice:":1" }}</div>{% endif %}
+        <div><h3>{{ profile.full_name }}</h3>{% if profile.degrees %}<p>{{ profile.degrees }}</p>{% endif %}</div>
+      </div>
+      <div class="overview-content">
+        {% if profile.short_bio %}<p class="overview-lead">{{ profile.short_bio }}</p>{% endif %}
+        <dl class="profile-facts">
+          {% if profile.highest_education %}<div><dt>Higher Education</dt><dd>{{ profile.highest_education }}</dd></div>{% endif %}
+          {% if profile.current_title %}<div><dt>Designation</dt><dd>{{ profile.current_title }}</dd></div>{% endif %}
+          {% if profile.institution %}<div><dt>Institution</dt><dd>{{ profile.institution }}{% if profile.department %}<span>{{ profile.department }}</span>{% endif %}</dd></div>{% endif %}
+          {% if profile.professional_specialty %}<div><dt>Professional Specialty</dt><dd>{{ profile.professional_specialty }}</dd></div>{% endif %}
+          {% if profile.academic_role %}<div><dt>Academic / Research Role</dt><dd>{{ profile.academic_role }}</dd></div>{% endif %}
+          {% if profile.professional_focus %}<div><dt>Professional Focus</dt><dd>{{ profile.professional_focus }}</dd></div>{% endif %}
+        </dl>
+        <div class="overview-actions">
+          <a class="hero-btn hero-btn-cv" href="{% url 'cv' %}">View Full Profile</a>
+          <a class="soft-link" href="{% url 'experience' %}">Professional Experience →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if home_settings.show_research_interests and profile.research_interest_list %}
+<section class="section interest-section alt">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Scientific Focus</p><h2>{{ home_settings.research_interests_title }}</h2></div></div>
+    <div class="interest-cloud">{% for interest in profile.research_interest_list %}<a href="{% url 'research_list' %}?q={{ interest|urlencode }}">{{ interest }}</a>{% endfor %}</div>
+    {% if profile.research_statement %}<p class="research-statement">{{ profile.research_statement }}</p>{% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if themes %}
+<section class="section">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Research Areas</p><h2>Research Themes</h2></div></div>
+    <div class="theme-grid">{% for theme in themes %}<article class="theme-card"><h3>{{ theme.name }}</h3><p>{{ theme.description|truncatewords:24 }}</p><a href="{% url 'research_list' %}?theme={{ theme.slug }}">Explore research →</a></article>{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+{% if home_settings.show_recent_research %}
+<section class="section alt">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Latest</p><h2>{{ home_settings.recent_research_title }}</h2></div><a class="section-link" href="{% url 'research_list' %}">View all research →</a></div>
+    <div class="publication-list">{% for pub in recent_publications %}{% include "partials/publication_card.html" with pub=pub %}{% empty %}<div class="empty-state">Add publications in the admin panel. The newest records will automatically appear first.</div>{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+{% if home_settings.show_featured_research and featured_publications %}
+<section class="section featured-research-section">
+  <div class="container">
+    <div class="section-head">
+      <div><p class="eyebrow">Highlights</p><h2>{{ home_settings.featured_research_title }}</h2></div>
+      <a class="section-link" href="{% url 'research_list' %}">View all research →</a>
+    </div>
+    <div class="featured-publication-grid">
+      {% for pub in featured_publications %}
+        {% include "partials/publication_card.html" with pub=pub %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if home_settings.show_professional_highlights and experiences %}
+<section class="section alt">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Professional Profile</p><h2>{{ home_settings.professional_title }}</h2></div><a class="section-link" href="{% url 'experience' %}">View full experience →</a></div>
+    <div class="professional-highlight-grid">
+      {% for item in experiences %}
+      <article class="professional-highlight-card">
+        <div class="highlight-year">{{ item.start_date|date:"Y" }}{% if item.currently_working %}–Present{% elif item.end_date %}–{{ item.end_date|date:"Y" }}{% endif %}</div>
+        <h3>{{ item.position }}</h3>
+        <p class="venue">{{ item.organization }}{% if item.department %} · {{ item.department }}{% endif %}</p>
+        {% if item.summary %}<p>{{ item.summary|truncatewords:35 }}</p>{% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if home_settings.show_projects and projects %}
+<section class="section">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Research Work</p><h2>{{ home_settings.projects_title }}</h2></div><a class="section-link" href="{% url 'projects' %}">All projects →</a></div>
+    <div class="card-grid">{% for project in projects %}<article class="content-card"><span class="badge">{{ project.status }}</span><h3>{{ project.title }}</h3><p>{{ project.summary|truncatewords:28 }}</p>{% if project.theme %}<small>{{ project.theme.name }}</small>{% endif %}</article>{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+{% if home_settings.show_hub and hub_items %}
+<section class="section alt">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Knowledge &amp; Resources</p><h2>{{ home_settings.hub_title }}</h2></div><a class="section-link" href="{% url 'hub_list' %}">Explore Research Hub →</a></div>
+    <div class="card-grid">{% for item in hub_items %}<article class="content-card"><span class="badge">{{ item.content_type }}</span><h3><a href="{{ item.get_absolute_url }}">{{ item.title }}</a></h3><p>{{ item.summary|truncatewords:30 }}</p></article>{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+{% if home_settings.show_people and people %}
+<section class="section">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">Scientific Network</p><h2>{{ home_settings.people_title }}</h2></div><a class="section-link" href="{% url 'people_list' %}">View Connected People →</a></div>
+    <div class="people-grid">{% for person in people %}{% include "partials/person_card.html" with person=person %}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+{% if home_settings.show_contact_cta %}
+<section class="section contact-cta enhanced-cta">
+  <div class="container">
+    <p class="eyebrow">{{ home_settings.contact_eyebrow }}</p>
+    <h2>{{ home_settings.contact_title }}</h2>
+    <p>{{ home_settings.contact_text }}</p>
+    <a class="hero-btn hero-btn-contact" href="{% url 'contact' %}">{{ home_settings.contact_button_text }}</a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

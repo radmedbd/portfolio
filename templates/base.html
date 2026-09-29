@@ -1,0 +1,74 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site_settings.default_meta_title|default:site_settings.site_name }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ site_settings.default_meta_description }}{% endblock %}">
+  {% if site_settings.favicon %}<link rel="icon" href="{{ site_settings.favicon.url }}">{% endif %}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{% block og_title %}{{ site_settings.owner_name|default:site_settings.site_name }}{% endblock %}">
+  <meta property="og:description" content="{{ site_settings.default_meta_description }}">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container nav-wrap">
+    <a class="brand" href="{% url 'home' %}" aria-label="Go to homepage">
+      {% if site_settings.logo %}
+        <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }} logo">
+      {% else %}
+        <span class="brand-mark" aria-hidden="true">{{ site_settings.owner_name|default:site_settings.site_name|slice:":1" }}</span>
+      {% endif %}
+      <span class="brand-copy">
+        <strong>{{ site_settings.owner_name|default:site_settings.site_name }}</strong>
+        <small>{{ site_settings.professional_title }}</small>
+      </span>
+    </a>
+
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">Menu</button>
+
+    <nav id="primary-nav" class="primary-nav" aria-label="Primary navigation">
+      <a class="{% if request.resolver_match.url_name == 'cv' %}active{% endif %}" href="{% url 'cv' %}">Academic &amp; Professional Profile</a>
+      <a class="{% if request.resolver_match.url_name == 'research_list' or request.resolver_match.url_name == 'research_detail' %}active{% endif %}" href="{% url 'research_list' %}">Research</a>
+      <a class="{% if request.resolver_match.url_name == 'hub_list' or request.resolver_match.url_name == 'hub_detail' %}active{% endif %}" href="{% url 'hub_list' %}">Research Hub</a>
+      <a class="{% if request.resolver_match.url_name == 'experience' %}active{% endif %}" href="{% url 'experience' %}">Experience</a>
+      <a class="{% if request.resolver_match.url_name == 'people_list' or request.resolver_match.url_name == 'people_detail' %}active{% endif %}" href="{% url 'people_list' %}">Connected People</a>
+      <a class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}" href="{% url 'contact' %}">Contact</a>
+    </nav>
+
+    <form class="header-search" action="{% url 'search' %}" method="get" role="search">
+      <label class="sr-only" for="site-search">Search</label>
+      <input id="site-search" type="search" name="q" placeholder="Search research…">
+    </form>
+  </div>
+</header>
+
+<main id="main">{% block content %}{% endblock %}</main>
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>
+      <strong>{{ site_settings.owner_name|default:site_settings.site_name }}</strong>
+      <p>{{ site_settings.footer_text|default:"Scientific portfolio, academic profile, research, and professional work." }}</p>
+    </div>
+    <div>
+      <strong>Academic &amp; social profiles</strong>
+      <div class="footer-links">
+        {% for item in academic_profiles %}<a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.label|default:item.platform }}</a>{% endfor %}
+        {% for item in social_links %}<a href="{{ item.url }}" {% if item.open_new_tab %}target="_blank" rel="noopener"{% endif %}>{{ item.label|default:item.platform }}</a>{% endfor %}
+        {% if not academic_profiles and not social_links %}<span>Add profiles in admin.</span>{% endif %}
+      </div>
+    </div>
+    <div>
+      <strong>Contact</strong>
+      <p>{% if site_settings.primary_email %}<a href="mailto:{{ site_settings.primary_email }}">{{ site_settings.primary_email }}</a>{% endif %}<br>{{ site_settings.institution }}</p>
+    </div>
+  </div>
+  <div class="container footer-bottom">© {% now "Y" %} {{ site_settings.owner_name|default:site_settings.site_name }}</div>
+</footer>
+<script src="{% static 'js/site.js' %}" defer></script>
+</body>
+</html>

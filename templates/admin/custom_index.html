@@ -1,0 +1,10 @@
+{% extends "admin/index.html" %}
+{% block content %}
+<div style="display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px;margin-bottom:24px">
+  <div style="padding:16px;background:var(--body-bg);border:1px solid var(--hairline-color);border-radius:8px"><strong style="font-size:24px;display:block">{{ global_metrics.total_publications }}</strong><span>Total publications</span></div>
+  <div style="padding:16px;background:var(--body-bg);border:1px solid var(--hairline-color);border-radius:8px"><strong style="font-size:24px;display:block">{{ global_metrics.total_citations }}</strong><span>Total citations</span></div>
+  <div style="padding:16px;background:var(--body-bg);border:1px solid var(--hairline-color);border-radius:8px"><strong style="font-size:24px;display:block">{{ portfolio_admin_metrics.active_projects }}</strong><span>Active projects</span></div>
+  <div style="padding:16px;background:var(--body-bg);border:1px solid var(--hairline-color);border-radius:8px"><strong style="font-size:24px;display:block">{{ portfolio_admin_metrics.new_inquiries }}</strong><span>New inquiries</span></div>
+</div>
+{{ block.super }}
+{% endblock %}

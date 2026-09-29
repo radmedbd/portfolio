@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Academic & Professional Profile — {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<section class="page-hero profile-page-hero">
+  <div class="container profile-page-header">
+    <div>
+      <p class="eyebrow">Academic &amp; Professional Profile</p>
+      <h1>{{ profile.full_name|default:site_settings.owner_name }}</h1>
+      {% if profile.degrees %}<p class="page-hero-subtitle">{{ profile.degrees }}</p>{% endif %}
+      {% if profile.current_title %}<p class="profile-current-title">{{ profile.current_title }}</p>{% endif %}
+      {% if profile.institution %}<p class="venue">{{ profile.institution }}{% if profile.department %} · {{ profile.department }}{% endif %}</p>{% endif %}
+    </div>
+    <div class="profile-page-actions">
+      {% if cv_document %}<a class="hero-btn hero-btn-research" href="{{ cv_document.file.url }}" download>↓ Download Full CV</a>{% endif %}
+      <button class="hero-btn hero-btn-cv print-profile" type="button" onclick="window.print()">Print Profile</button>
+    </div>
+  </div>
+</section>
+
+{% if profile %}
+<section class="section profile-summary-section">
+  <div class="container profile-summary-grid">
+    <aside class="profile-summary-card">
+      {% if profile.profile_photo %}<img src="{{ profile.profile_photo.url }}" alt="Portrait of {{ profile.full_name }}">{% else %}<div class="photo-placeholder large">{{ profile.full_name|slice:":1" }}</div>{% endif %}
+      <h2>{{ profile.full_name }}</h2>
+      {% if profile.degrees %}<p>{{ profile.degrees }}</p>{% endif %}
+      <div class="profile-links">{% for item in academic_profiles %}<a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.label|default:item.platform }}</a>{% endfor %}</div>
+    </aside>
+
+    <div class="profile-summary-main">
+      <h2>Professional Summary</h2>
+      {% if profile.full_bio %}{{ profile.full_bio|linebreaks }}{% elif profile.short_bio %}{{ profile.short_bio|linebreaks }}{% endif %}
+
+      <dl class="profile-facts profile-facts-wide">
+        {% if profile.highest_education %}<div><dt>Higher Education</dt><dd>{{ profile.highest_education }}</dd></div>{% endif %}
+        {% if profile.current_title %}<div><dt>Current Designation</dt><dd>{{ profile.current_title }}</dd></div>{% endif %}
+        {% if profile.institution %}<div><dt>Institution</dt><dd>{{ profile.institution }}{% if profile.department %}<span>{{ profile.department }}</span>{% endif %}</dd></div>{% endif %}
+        {% if profile.professional_specialty %}<div><dt>Professional Specialty</dt><dd>{{ profile.professional_specialty }}</dd></div>{% endif %}
+        {% if profile.academic_role %}<div><dt>Academic / Research Role</dt><dd>{{ profile.academic_role }}</dd></div>{% endif %}
+        {% if profile.location %}<div><dt>Location</dt><dd>{{ profile.location }}</dd></div>{% endif %}
+      </dl>
+
+      {% if profile.research_interest_list %}
+      <div class="profile-focus-block">
+        <h3>Research Interests</h3>
+        <div class="interest-cloud compact-cloud">{% for item in profile.research_interest_list %}<a href="{% url 'research_list' %}?q={{ item|urlencode }}">{{ item }}</a>{% endfor %}</div>
+      </div>
+      {% endif %}
+
+      {% if profile.research_statement %}<div class="profile-focus-block"><h3>Research Statement</h3>{{ profile.research_statement|linebreaks }}</div>{% endif %}
+      {% if profile.professional_focus %}<div class="profile-focus-block"><h3>Professional Focus</h3><p>{{ profile.professional_focus }}</p></div>{% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section alt">
+  <div class="container cv-layout">
+    <aside class="cv-nav">
+      <strong>Profile Sections</strong>
+      {% for section in sections %}<a href="#{{ section.slug }}">{{ section.title }}</a>{% endfor %}
+    </aside>
+
+    <div class="cv-content">
+      {% for section in sections %}
+      <section id="{{ section.slug }}" class="cv-section">
+        <h2>{{ section.title }}</h2>
+        {% if section.description %}<p>{{ section.description }}</p>{% endif %}
+        {% for entry in section.entries.all %}
+          {% if entry.visible %}
+          <article class="timeline-item">
+            <div class="timeline-date">
+              {% if entry.start_date %}{{ entry.start_date|date:"Y" }}{% endif %}
+              {% if entry.end_date %}–{{ entry.end_date|date:"Y" }}{% elif entry.is_current %}–Present{% endif %}
+            </div>
+            <div>
+              <h3>{{ entry.title }}</h3>
+              <p class="venue">{{ entry.subtitle }}{% if entry.institution %} · {{ entry.institution }}{% endif %}{% if entry.location %} · {{ entry.location }}{% endif %}</p>
+              {{ entry.description|linebreaks }}
+              {% if entry.achievements %}<div class="subtle-box">{{ entry.achievements|linebreaks }}</div>{% endif %}
+              {% if entry.url %}<p><a class="soft-link" href="{{ entry.url }}" target="_blank" rel="noopener">Related link →</a></p>{% endif %}
+            </div>
+          </article>
+          {% endif %}
+        {% empty %}
+          <p class="muted">No entries yet.</p>
+        {% endfor %}
+      </section>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

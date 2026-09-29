@@ -1,0 +1,5 @@
+<article class="publication-card">
+  <div class="pub-main"><div class="pub-meta"><span class="badge">{{ pub.publication_type }}</span>{% if pub.year %}<span>{{ pub.year }}</span>{% endif %}{% if pub.theme %}<span>{{ pub.theme.name }}</span>{% endif %}</div><h3><a href="{{ pub.get_absolute_url }}">{{ pub.title }}</a></h3><p class="authors">{{ pub.authors }}</p><p class="venue">{% if pub.journal %}{{ pub.journal }}{% elif pub.book_title %}{{ pub.book_title }}{% elif pub.conference %}{{ pub.conference }}{% endif %}{% if pub.volume %}, {{ pub.volume }}{% endif %}{% if pub.issue %}({{ pub.issue }}){% endif %}{% if pub.pages %}: {{ pub.pages }}{% endif %}</p>
+  <div class="pub-links">{% if pub.doi %}<a href="{{ pub.doi_url }}" target="_blank" rel="noopener">DOI</a>{% endif %}{% if pub.pdf %}<a href="{{ pub.pdf.url }}">PDF</a>{% endif %}{% if pub.external_url %}<a href="{{ pub.external_url }}" target="_blank" rel="noopener">External</a>{% endif %}</div></div>
+  <div class="citation-box"><strong>{{ pub.citation_count }}</strong><span>Citations</span></div>
+</article>
